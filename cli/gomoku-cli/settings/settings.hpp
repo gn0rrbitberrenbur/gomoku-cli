@@ -10,6 +10,7 @@ struct EngineEntry
 {
     std::string name;
     std::filesystem::path executable;
+    std::string sha256;
 };
 
 class EngineStore
@@ -21,6 +22,7 @@ public:
     void add(EngineEntry entry);
     void edit(std::size_t index, EngineEntry entry);
     void remove(std::size_t index);
+    static std::string calculateSha256(const std::filesystem::path& executable);
     static void validate(const EngineEntry& entry);
 
 private:

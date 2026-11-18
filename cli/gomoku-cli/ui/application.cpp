@@ -146,7 +146,7 @@ void Application::editEngine(std::optional<std::size_t> index)
     {
         return;
     }
-    EngineEntry entry{*name, std::filesystem::u8path(*path)};
+    EngineEntry entry{*name, std::filesystem::u8path(*path), ""};
     if (index)
     {
         store_.edit(*index, std::move(entry));

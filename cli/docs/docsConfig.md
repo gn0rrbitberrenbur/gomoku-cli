@@ -22,12 +22,19 @@ Defaults are `%APPDATA%\moku-cli\engines.cfg` on Windows and
 `--config <path>` overrides the location. If no default directory is available, the application
 reports an error instead of silently choosing a temporary location.
 
-The format is UTF-8 with a version header and two `std::quoted` fields per line:
+The format is UTF-8 with a version header and three fields per line: the quoted name, the quoted
+path, and the lowercase SHA-256 hash of the executable:
 
 ```text
-MOKU_ENGINES 1
-"Example engine" "C:\\engines\\example.exe"
+MOKU_ENGINES 2
+"Example engine" "C:\\engines\\example.exe" a3f2...
 ```
+
+Legacy `MOKU_ENGINES 1` registries are loaded as a compatibility format and are migrated to
+version 2 by calculating and storing the hash for each existing executable. On registration and
+editing, the hash is calculated immediately. Before an engine is started anywhere in the CLI,
+`EngineStore::validate` recalculates its SHA-256 hash and rejects the entry if the binary changed
+or the stored hash is malformed.
 
 Writes use `engines.cfg.tmp` next to the destination and an atomic replacement through the shared
 `writeFileAtomically` helper ([file_io.hpp](../moku-cli/file_handling/file_io.hpp)), also used for test reports.

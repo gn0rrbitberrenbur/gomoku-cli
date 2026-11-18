@@ -119,6 +119,13 @@ void storeTests(const std::filesystem::path& directory, const std::filesystem::p
     const auto file = directory / "config with spaces" / "engines.cfg";
     cli::EngineStore store(file);
     require(store.entries().empty(), "New registry must be empty.");
+    const auto emptyFile = directory / "empty.sha256-test";
+    {
+        std::ofstream empty(emptyFile, std::ios::binary);
+    }
+    require(cli::EngineStore::calculateSha256(emptyFile) ==
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "SHA-256 implementation for empty files.");
     store.add({"First \"engine\"", executable});
     require(cli::EngineStore(file).entries()[0].name == "First \"engine\"",
             "Registry quoted round-trip.");
@@ -164,6 +171,11 @@ void storeTests(const std::filesystem::path& directory, const std::filesystem::p
         await(worker.ready());
         require(await(worker.request(std::nullopt)).move.x == 0, "Unicode executable path.");
     }
+    {
+        std::ofstream changed(unicodePath, std::ios::binary | std::ios::app);
+        changed << 'X';
+    }
+    rejects([&] { cli::EngineStore::validate(reloaded.entries()[1]); }, "SHA-256 mismatch");
     rejects([&] { store.remove(99); });
     const auto corrupt = directory / "corrupt.cfg";
     {
