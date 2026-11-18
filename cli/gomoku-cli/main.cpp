@@ -19,10 +19,16 @@ template <typename Character> int run(int argc, Character** argv)
             const std::filesystem::path argument = argv[i];
             if (argument == "--help")
             {
-                std::cout << "moku_cli - interactive Gomoku manager\n\n"
-                             "Usage: moku_cli [--config <registry-path>]\n"
-                             "       moku_cli --help\n\n"
+                std::cout << "gomoku_cli " GOMOKU_VERSION " - interactive Gomoku manager\n\n"
+                             "Usage: gomoku_cli [--config <registry-path>]\n"
+                             "       gomoku_cli --help\n"
+                             "       gomoku_cli --version\n\n"
                              "Run in an interactive ANSI terminal. Engines are external\n";
+                return 0;
+            }
+            if (argument == "--version")
+            {
+                std::cout << GOMOKU_VERSION << '\n';
                 return 0;
             }
             if (argument != "--config" || i + 1 >= argc || !configuration.empty())
@@ -39,7 +45,7 @@ template <typename Character> int run(int argc, Character** argv)
     }
     catch (const std::exception& error)
     {
-        std::cerr << "moku_cli: " << error.what() << '\n';
+        std::cerr << "gomoku_cli: " << error.what() << '\n';
         return 1;
     }
 }

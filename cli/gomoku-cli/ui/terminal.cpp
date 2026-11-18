@@ -70,7 +70,7 @@ std::string clippedText(const std::string& text, std::size_t limit)
  */
 std::string heading(const std::string& title)
 {
-    return "\x1b[1;36m\n  M O K U\x1b[0m  /  " + safeText(title) +
+    return "\x1b[1;36m\n  M O K U v" GOMOKU_VERSION "\x1b[0m  /  " + safeText(title) +
            "\n  ----------------------------------------------------------\n\n";
 }
 

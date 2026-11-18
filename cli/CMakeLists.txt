@@ -11,20 +11,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Threads REQUIRED)
 
 add_library(cli_core
-    moku-cli/board/board.cpp
-    moku-cli/engine/engine.cpp
-    moku-cli/engine/debug.cpp
-    moku-cli/file_handling/file_io.cpp
-    moku-cli/file_handling/json.cpp
-    moku-cli/process/process.cpp
-    moku-cli/settings/settings.cpp
-    moku-cli/tests/test_report.cpp
-    moku-cli/tests/test_runner.cpp
+    gomoku-cli/board/board.cpp
+    gomoku-cli/engine/engine.cpp
+    gomoku-cli/engine/debug.cpp
+    gomoku-cli/file_handling/file_io.cpp
+    gomoku-cli/file_handling/json.cpp
+    gomoku-cli/process/process.cpp
+    gomoku-cli/settings/settings.cpp
+    gomoku-cli/tests/test_report.cpp
+    gomoku-cli/tests/test_runner.cpp
 )
 
 target_include_directories(cli_core PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/moku-cli"
+    "${CMAKE_CURRENT_SOURCE_DIR}/gomoku-cli"
 )
 
 target_link_libraries(cli_core PUBLIC Threads::Threads)
@@ -34,11 +34,11 @@ if(WIN32)
 endif()
 
 add_executable(gomoku_cli
-    moku-cli/main.cpp
-    moku-cli/ui/application.cpp
-    moku-cli/ui/terminal.cpp
-    moku-cli/tests/test_mode.cpp
-    moku-cli/ui/ui_helpers.cpp
+    gomoku-cli/main.cpp
+    gomoku-cli/ui/application.cpp
+    gomoku-cli/ui/terminal.cpp
+    gomoku-cli/tests/test_mode.cpp
+    gomoku-cli/ui/ui_helpers.cpp
 )
 target_link_libraries(gomoku_cli PRIVATE cli_core)
 
@@ -53,6 +53,18 @@ else()
     target_compile_options(cli_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(gomoku_cli PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+set(GOMOKU_VERSION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION")
+if(NOT EXISTS "${GOMOKU_VERSION_FILE}")
+    message(FATAL_ERROR "Missing version file: ${GOMOKU_VERSION_FILE}")
+endif()
+file(STRINGS "${GOMOKU_VERSION_FILE}" GOMOKU_VERSION LIMIT_COUNT 1)
+string(STRIP "${GOMOKU_VERSION}" GOMOKU_VERSION)
+if(NOT GOMOKU_VERSION)
+    message(FATAL_ERROR "Version file is empty: ${GOMOKU_VERSION_FILE}")
+endif()
+
+target_compile_definitions(gomoku_cli PRIVATE GOMOKU_VERSION="${GOMOKU_VERSION}")
 
 include(CTest)
 if(BUILD_TESTING)
