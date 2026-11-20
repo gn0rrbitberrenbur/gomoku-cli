@@ -1,0 +1,99 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: LINUX
+          - os: windows-latest
+            platform: WINDOWS
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential zip
+
+      - name: Read version
+        shell: bash
+        run: |
+          version="$(tr -d '[:space:]' < VERSION)"
+          echo "GOMOKU_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Configure CMake
+        shell: bash
+        run: cmake -S cli -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+
+      - name: Build gomoku_cli target
+        shell: bash
+        run: cmake --build build --config Release --target gomoku_cli
+
+      - name: Prepare Linux artifact
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          executable="gomoku_cli_${GOMOKU_VERSION}"
+          archive="gomoku_cli_${GOMOKU_VERSION}_${{ matrix.platform }}.zip"
+          mkdir -p release
+          cp build/gomoku_cli "release/${executable}"
+          chmod +x "release/${executable}"
+          cd release
+          zip -j "$archive" "$executable"
+
+      - name: Prepare Windows artifact
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $executable = "gomoku_cli_${env:GOMOKU_VERSION}.exe"
+          $archive = "gomoku_cli_${env:GOMOKU_VERSION}_${{ matrix.platform }}.zip"
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item "build/Release/gomoku_cli.exe" "release/$executable"
+          Compress-Archive -Path "release/$executable" -DestinationPath "release/$archive" -Force
+
+      - name: Upload Linux artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gomoku-cli-linux
+          path: release/*.zip
+
+      - name: Upload Windows artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gomoku-cli-windows
+          path: release/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/gomoku-cli-linux/*.zip
+            artifacts/gomoku-cli-windows/*.zip
